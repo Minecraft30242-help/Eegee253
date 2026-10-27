@@ -1,0 +1,17 @@
+/workspaces/Eegee253/src/main/java/com/example/chat/Main.java
+/workspaces/Eegee253/src/main/java/com/example/chat/config/WebSocketConfig.java
+/workspaces/Eegee253/src/main/java/com/example/chat/controller/AdminController.java
+/workspaces/Eegee253/src/main/java/com/example/chat/controller/AuthController.java
+/workspaces/Eegee253/src/main/java/com/example/chat/controller/BanController.java
+/workspaces/Eegee253/src/main/java/com/example/chat/controller/ChatSocketController.java
+/workspaces/Eegee253/src/main/java/com/example/chat/controller/ContactController.java
+/workspaces/Eegee253/src/main/java/com/example/chat/controller/ErrorPageController.java
+/workspaces/Eegee253/src/main/java/com/example/chat/controller/FileController.java
+/workspaces/Eegee253/src/main/java/com/example/chat/controller/GroupController.java
+/workspaces/Eegee253/src/main/java/com/example/chat/controller/HomeController.java
+/workspaces/Eegee253/src/main/java/com/example/chat/controller/MessageController.java
+/workspaces/Eegee253/src/main/java/com/example/chat/controller/PluginApiController.java
+/workspaces/Eegee253/src/main/java/com/example/chat/controller/PluginDocController.java
+/workspaces/Eegee253/src/main/java/com/example/chat/controller/ReportController.java
+/workspaces/Eegee253/src/main/java/com/example/chat/service/CommandConsole.java
+/workspaces/Eegee253/src/main/java/com/example/chat/service/Store.java

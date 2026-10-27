@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spring Chat Plugin API</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #222; background: #fff; margin: 0; line-height: 1.55; }
+  header { background: #6db33f; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  header a { color: #fff; font-weight: 600; }
+  .tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .tools button { background: rgba(255,255,255,.2); color: #fff; border: none; border-radius: 8px; padding: 6px 10px; font: inherit; font-size: .9rem; cursor: pointer; }
+  .tools button:hover { background: rgba(255,255,255,.32); }
+  .switch-label { display: flex; align-items: center; gap: 8px; font-size: .9rem; cursor: pointer; }
+  .switch { position: relative; width: 40px; height: 22px; display: inline-block; }
+  .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .slider { position: absolute; inset: 0; background: rgba(255,255,255,.35); border-radius: 22px; transition: .2s; }
+  .slider:before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+  .switch input:checked + .slider { background: #fff; }
+  .switch input:checked + .slider:before { transform: translateX(18px); background: #6db33f; }
+
+  /* Page: contents and text */
+  .page { max-width: 1100px; margin: 0 auto; padding: 0 20px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; }
+  .toc { position: sticky; top: 16px; align-self: start; padding-top: 20px; font-size: .92rem; }
+  .toc-title { font-weight: 600; margin-bottom: 8px; }
+  .toc ul { list-style: none; padding: 0; margin: 0; }
+  .toc li { margin: 6px 0; }
+  .toc a { color: inherit; text-decoration: none; opacity: .85; }
+  .toc a:hover { color: #6db33f; opacity: 1; }
+  .page main { padding: 20px 0 40px; min-width: 0; }
+  h1 { font-size: 1.7rem; margin-top: 12px; }
+  h2 { font-size: 1.25rem; margin-top: 30px; border-bottom: 1px solid #e5e5e5; padding-bottom: 4px; }
+  code { background: #f3f3f3; padding: 1px 5px; border-radius: 4px; font-size: .92em; }
+  pre { background: #1e1e1e; color: #ddd; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: .86rem; }
+  pre code { background: none; padding: 0; color: inherit; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: .95rem; }
+  th, td { border: 1px solid #e5e5e5; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #f7f7f7; }
+  .note { background: #eef8e6; border-left: 4px solid #6db33f; padding: 10px 14px; border-radius: 6px; }
+  pre { position: relative; }
+  pre .copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,.16); color: #eee; border: none; border-radius: 6px; padding: 4px 9px; font: inherit; font-size: .75rem; cursor: pointer; }
+  pre .copy-btn:hover { background: rgba(255,255,255,.3); }
+
+  /* Mobile UI: one column, contents above the text */
+  body.layout-mobile .page { grid-template-columns: 1fr; padding: 0 16px; gap: 0; }
+  body.layout-mobile .toc { position: static; padding: 14px; margin-top: 12px; background: #f7f7f7; border-radius: 10px; }
+  body.layout-mobile .page main { padding-top: 12px; font-size: 1.02rem; }
+  body.layout-mobile h1 { font-size: 1.4rem; }
+  body.layout-mobile pre { font-size: .8rem; }
+  body.layout-mobile table { font-size: .88rem; }
+  body.layout-mobile header { padding: 10px 14px; }
+  body.layout-mobile .tools button { padding: 8px 10px; }
+
+  /* PC UI: contents beside the text */
+  body.layout-pc .page main { font-size: 1rem; }
+
+  /* 404 section */
+  #notFound404 { max-width: 820px; margin: 0 auto; padding: 20px; }
+  .nf { text-align: center; padding: 60px 10px; }
+  .nf-code { font-size: 5rem; font-weight: 700; color: #6db33f; line-height: 1; }
+  .nf p { color: #666; }
+
+  /* Dark mode */
+  body.dark { background: #1a1a1a; color: #e6e6e6; }
+  body.dark code { background: #2a2a2a; }
+  body.dark th { background: #252525; }
+  body.dark th, body.dark td { border-color: #333; }
+  body.dark h2 { border-bottom-color: #333; }
+  body.dark .note { background: #22331c; }
+  body.dark .nf p { color: #9aa0a6; }
+  body.dark .toc a { color: #e6e6e6; }
+  body.dark.layout-mobile .toc { background: #252525; }
+  body.dark pre { background: #111; }
+</style>
+</head>
+<body>
+<header>
+  <span>Spring Chat Plugin API</span>
+  <div class="tools">
+    <button type="button" id="layoutMobile">Mobile UI</button>
+    <button type="button" id="layoutPc">PC UI</button>
+    <label class="switch-label">
+      <span class="switch"><input type="checkbox" id="darkToggle"><span class="slider"></span></span>
+      Dark mode
+    </label>
+    <a href="/">Back to chat</a>
+  </div>
+</header>
+
+<div class="page" id="docsPage">
+  <nav class="toc" id="toc" aria-label="On this page"></nav>
+  <main id="docs">
+
+<h1>Plugin API</h1>
+<p>A plugin lets another program post messages into a group chat. For example, a build server can announce that a build finished, or a monitoring script can report an alert.</p>
+
+<h2>1. Create a plugin</h2>
+<ol>
+  <li>Open the group and click <strong>Edit</strong>. You need to be the group owner or an admin.</li>
+  <li>Open the <strong>Plugins</strong> tab, enter a name (2 to 30 letters, digits, spaces, <code>_</code> or <code>-</code>), and click <strong>Create plugin</strong>.</li>
+  <li>Copy the key that appears. <strong>It is shown only once.</strong> If you lose it, delete the plugin and create a new one.</li>
+</ol>
+<p>Deleting a plugin in the same tab revokes its key straight away.</p>
+
+<h2>2. Authenticate</h2>
+<p>Send the key in the <code>X-Plugin-Key</code> header with every request:</p>
+<pre><code>X-Plugin-Key: sc_your_key_here</code></pre>
+
+<h2>3. Endpoints</h2>
+<p>The base address is the address of your Spring Chat server, for example <code>http://localhost:8080</code>.</p>
+
+<h3>GET /api/plugin/info</h3>
+<p>Checks the key and shows which plugin and group it belongs to.</p>
+<pre><code>curl -H "X-Plugin-Key: sc_your_key_here" http://localhost:8080/api/plugin/info</code></pre>
+<pre><code>{
+  "name": "Build Bot",
+  "groupId": "3f2a9c1e-...",
+  "group": "Release team"
+}</code></pre>
+
+<h3>POST /api/plugin/messages</h3>
+<p>Posts a text message into the group. The body is JSON with a <code>text</code> field of up to 2000 characters.</p>
+<pre><code>curl -X POST http://localhost:8080/api/plugin/messages \
+  -H "X-Plugin-Key: sc_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Build 412 finished successfully."}'</code></pre>
+<p>The response is the stored message:</p>
+<pre><code>{
+  "id": "8d1c...",
+  "roomId": "group-3f2a9c1e-...",
+  "sender": "(plugin) Build Bot",
+  "type": "TEXT",
+  "content": "Build 412 finished successfully.",
+  "timestamp": 1761560000000
+}</code></pre>
+
+<h3>Example in JavaScript</h3>
+<pre><code>const res = await fetch("http://localhost:8080/api/plugin/messages", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-Plugin-Key": process.env.CHAT_PLUGIN_KEY
+  },
+  body: JSON.stringify({ text: "Deploy to staging complete." })
+});
+if (!res.ok) throw new Error(await res.text());</code></pre>
+
+<h3>Example in Java</h3>
+<p>This example uses the built-in <code>java.net.http</code> client, which is available in Java 11 and newer, so it needs no extra libraries. Set <code>CHAT_PLUGIN_KEY</code> in your environment before you run it.</p>
+<pre><code>import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+public class PluginExample {
+
+    public static void main(String[] args) throws Exception {
+        String key = System.getenv("CHAT_PLUGIN_KEY");
+        String body = "{\"text\": \"Deploy to staging complete.\"}";
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:8080/api/plugin/messages"))
+                .header("Content-Type", "application/json")
+                .header("X-Plugin-Key", key)
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+
+        HttpResponse&lt;String&gt; response = HttpClient.newHttpClient()
+                .send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new IllegalStateException("Post failed: " + response.statusCode() + " " + response.body());
+        }
+        System.out.println("Posted: " + response.body());
+    }
+}</code></pre>
+
+<h3>Example in CommonJS (.cjs)</h3>
+<p>Use this with <code>require()</code>. It needs Node.js 18 or newer for the built-in <code>fetch</code>. Save the file as <code>post-message.cjs</code>.</p>
+<pre><code>// post-message.cjs
+// Run with: CHAT_PLUGIN_KEY=sc_your_key_here node post-message.cjs
+const key = process.env.CHAT_PLUGIN_KEY;
+
+async function postMessage(text) {
+  const res = await fetch("http://localhost:8080/api/plugin/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Plugin-Key": key
+    },
+    body: JSON.stringify({ text })
+  });
+  if (!res.ok) {
+    throw new Error(`Post failed: ${res.status} ${await res.text()}`);
+  }
+  return res.json();
+}
+
+postMessage("Deploy to staging complete.")
+  .then((message) =&gt; console.log("Posted:", message.id))
+  .catch((err) =&gt; {
+    console.error(err.message);
+    process.exitCode = 1;
+  });
+
+module.exports = { postMessage };</code></pre>
+
+<h3>Example in ES modules (.mjs)</h3>
+<p>Use this with <code>import</code>, and with top-level <code>await</code>. It needs Node.js 18 or newer. Save the file as <code>post-message.mjs</code>.</p>
+<pre><code>// post-message.mjs
+// Run with: CHAT_PLUGIN_KEY=sc_your_key_here node post-message.mjs
+const key = process.env.CHAT_PLUGIN_KEY;
+
+export async function postMessage(text) {
+  const res = await fetch("http://localhost:8080/api/plugin/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Plugin-Key": key
+    },
+    body: JSON.stringify({ text })
+  });
+  if (!res.ok) {
+    throw new Error(`Post failed: ${res.status} ${await res.text()}`);
+  }
+  return res.json();
+}
+
+try {
+  const message = await postMessage("Deploy to staging complete.");
+  console.log("Posted:", message.id);
+} catch (err) {
+  console.error(err.message);
+  process.exitCode = 1;
+}</code></pre>
+
+<h3>Module: @springchat/api for ES modules (.mjs)</h3>
+<p>The <code>@springchat/api</code> module works with <code>import</code> and with <code>require()</code>. It is in the <code>clients/springchat-api</code> folder of the project. Install it from that folder with:</p>
+<pre><code>npm install ./clients/springchat-api</code></pre>
+<p>Then use it in an ES module:</p>
+<pre><code>import { SpringChatPlugin } from "@springchat/api";
+
+const plugin = new SpringChatPlugin({
+  baseUrl: "http://localhost:8080",
+  key: process.env.CHAT_PLUGIN_KEY
+});
+
+const message = await plugin.postMessage("Deploy to staging complete.");
+console.log("Posted:", message.id);
+
+const info = await plugin.info();
+console.log("Plugin:", info.name, "in", info.group);</code></pre>
+<p>Errors from the server are thrown as <code>SpringChatError</code>, which has a <code>status</code> property.</p>
+
+<h3>Module: @springchat/api for CommonJS (.cjs)</h3>
+<p>Install the same module as above (<code>npm install ./clients/springchat-api</code>), then use it with <code>require()</code>:</p>
+<pre><code>const { SpringChatPlugin } = require("@springchat/api");
+
+const plugin = new SpringChatPlugin({
+  baseUrl: "http://localhost:8080",
+  key: process.env.CHAT_PLUGIN_KEY
+});
+
+async function main() {
+  const message = await plugin.postMessage("Deploy to staging complete.");
+  console.log("Posted:", message.id);
+}
+
+main().catch((err) =&gt; {
+  console.error(err.message);
+  process.exitCode = 1;
+});</code></pre>
+
+<h3>Module: spring.chat.api for Java</h3>
+<p>The Java client is the package <code>spring.chat.api</code>. It is in the <code>clients/java/spring/chat/api</code> folder of the project. Copy that folder into your source tree at <code>src/main/java/spring/chat/api/</code>, or compile it into a JAR. It needs Java 11 or newer and uses the built-in <code>java.net.http</code> client.</p>
+<pre><code>import spring.chat.api.SpringChatPlugin;
+
+public class Deploy {
+
+    public static void main(String[] args) throws Exception {
+        SpringChatPlugin plugin = new SpringChatPlugin("http://localhost:8080", System.getenv("CHAT_PLUGIN_KEY"));
+        String reply = plugin.postMessage("Deploy to staging complete.");
+        System.out.println("Posted: " + reply);
+    }
+}</code></pre>
+<p>Server errors are thrown as <code>SpringChatPlugin.ApiException</code>, which has a <code>status()</code> method.</p>
+
+<div class="note">
+  <strong>Note:</strong> These modules are part of this project. They are not yet published to npm or Maven Central, so install them from the project folder as shown above.
+</div>
+
+<h2>4. Messages from plugins</h2>
+<ul>
+  <li>Messages appear as <code>(plugin) Name</code>, so members can tell them apart from people.</li>
+  <li>Plugins can post even when the group is set to <em>Only admins can send messages</em>, because the key belongs to an admin-created plugin.</li>
+  <li>Posts appear live for everyone who has the group open.</li>
+</ul>
+
+<h2>5. Errors</h2>
+<table>
+  <tr><th>Status</th><th>Meaning</th></tr>
+  <tr><td>400</td><td>The text is empty or longer than 2000 characters.</td></tr>
+  <tr><td>401</td><td>The <code>X-Plugin-Key</code> header is missing, wrong, or belongs to a deleted plugin.</td></tr>
+</table>
+
+<h2>6. Good practice</h2>
+<ul>
+  <li>Keep keys out of source code. Store them in environment variables or a secrets manager.</li>
+  <li>Create one plugin per script or service, so you can revoke one without affecting the others.</li>
+  <li>Post short, useful messages. Long logs are better shared as a file.</li>
+</ul>
+
+<h2>7. Full examples</h2>
+<p>Each example below is a complete file. They use the <code>@springchat/api</code> module from section 3, so install it first with <code>npm install ./clients/springchat-api</code>. Set <code>CHAT_PLUGIN_KEY</code> to your key before you run them.</p>
+
+<h3>Custom command: chatctl</h3>
+<p>A command-line tool that posts deploy, build, and alert messages to the group. Save the file as <code>chatctl.mjs</code>.</p>
+<pre><code>// chatctl.mjs - a command-line tool that posts to a Spring Chat group
+// Usage:
+//   CHAT_PLUGIN_KEY=sc_your_key_here node chatctl.mjs deploy staging v1.4.2
+//   CHAT_PLUGIN_KEY=sc_your_key_here node chatctl.mjs build 412 success
+//   CHAT_PLUGIN_KEY=sc_your_key_here node chatctl.mjs alert Disk is 90% full
+//   node chatctl.mjs help
+import { SpringChatPlugin, SpringChatError } from "@springchat/api";
+
+const COMMANDS = {
+  deploy: {
+    usage: "deploy &lt;environment&gt; &lt;version&gt;",
+    minArgs: 2,
+    format: ([environment, version]) =&gt; `Deploy to ${environment} started: ${version}`
+  },
+  build: {
+    usage: "build &lt;number&gt; &lt;success|failed&gt;",
+    minArgs: 2,
+    format: ([number, status]) =&gt; `Build #${number} ${status}.`
+  },
+  alert: {
+    usage: "alert &lt;message...&gt;",
+    minArgs: 1,
+    format: (words) =&gt; `ALERT: ${words.join(" ")}`
+  }
+};
+
+function printHelp() {
+  console.log("Commands:");
+  for (const command of Object.values(COMMANDS)) console.log(`  ${command.usage}`);
+  console.log("  help");
+}
+
+async function run(argv) {
+  const [name, ...args] = argv;
+  if (!name || name === "help") {
+    printHelp();
+    return;
+  }
+
+  const command = COMMANDS[name];
+  if (!command) throw new Error(`Unknown command "${name}". Run "help" for the list.`);
+  if (args.length &lt; command.minArgs) throw new Error(`Usage: ${command.usage}`);
+
+  const plugin = new SpringChatPlugin({
+    baseUrl: process.env.CHAT_URL || "http://localhost:8080",
+    key: process.env.CHAT_PLUGIN_KEY
+  });
+  const message = await plugin.postMessage(command.format(args));
+  console.log(`Posted: ${message.content}`);
+}
+
+run(process.argv.slice(2)).catch((err) =&gt; {
+  console.error(err instanceof SpringChatError
+    ? `Server error ${err.status}: ${err.message}`
+    : err.message);
+  process.exitCode = 1;
+});</code></pre>
+<pre><code>CHAT_PLUGIN_KEY=sc_your_key_here node chatctl.mjs deploy staging v1.4.2
+CHAT_PLUGIN_KEY=sc_your_key_here node chatctl.mjs build 412 success
+CHAT_PLUGIN_KEY=sc_your_key_here node chatctl.mjs alert Disk is 90 percent full</code></pre>
+
+<h3>Custom UI: status cards</h3>
+<p>A small formatter that turns status data into a structured message: a heading line with the status in brackets, then one labeled field per line. Chat bubbles show plain text, so the layout uses line breaks rather than tables. Save the file as <code>card.mjs</code>, then post its output with <code>postMessage</code>.</p>
+<pre><code>// card.mjs - a custom layout for status messages
+// Builds a short, structured message: a heading line, then one labeled field per line.
+export function statusCard({ title, status, fields = {} }) {
+  const lines = [`[${status.toUpperCase()}] ${title}`];
+  for (const [label, value] of Object.entries(fields)) {
+    lines.push(`  ${label}: ${value}`);
+  }
+  return lines.join("\n");
+}</code></pre>
+<pre><code>import { SpringChatPlugin } from "@springchat/api";
+import { statusCard } from "./card.mjs";
+
+const plugin = new SpringChatPlugin({ key: process.env.CHAT_PLUGIN_KEY });
+const text = statusCard({
+  title: "Build #412",
+  status: "success",
+  fields: { Branch: "main", Duration: "3m 12s" }
+});
+await plugin.postMessage(text);</code></pre>
+
+<h3>Custom verify: checked posting</h3>
+<p>A wrapper that checks the key and group before posting, blocks empty, overly long, or secret-looking text, and confirms the server stored the same text from this plugin. Save the file as <code>verify.mjs</code>. Set <code>CHAT_GROUP</code> to a group name to make sure the key belongs to that group.</p>
+<pre><code>// verify.mjs - checks the key, the group and the text before posting, then checks the server's reply
+import { SpringChatPlugin, SpringChatError } from "@springchat/api";
+
+const MAX_LENGTH = 2000;
+const SECRET_PATTERNS = [
+  /sc_[a-f0-9]{16,}/i,                              // a plugin key
+  /password\s*[=:]/i,                               // a password assignment
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----/              // a private key
+];
+
+// Rejects text that is empty, too long, or looks like it contains a secret
+export function checkText(text) {
+  if (typeof text !== "string" || text.trim() === "") throw new Error("Message is empty");
+  if (text.length &gt; MAX_LENGTH) throw new Error(`Message is longer than ${MAX_LENGTH} characters`);
+  for (const pattern of SECRET_PATTERNS) {
+    if (pattern.test(text)) throw new Error("Message looks like it contains a secret, so it was not sent");
+  }
+  return text.trim();
+}
+
+// Asks the server who this key belongs to. An invalid key throws a 401 SpringChatError.
+export async function verifyKey(plugin, expectedGroup) {
+  const info = await plugin.info();
+  if (expectedGroup &amp;&amp; info.group !== expectedGroup) {
+    throw new Error(`This key belongs to "${info.group}", not "${expectedGroup}"`);
+  }
+  return info;
+}
+
+// Checks the key and text, posts the message, and confirms the server stored what was sent
+export async function sendVerified(plugin, text, expectedGroup) {
+  const clean = checkText(text);
+  const info = await verifyKey(plugin, expectedGroup);
+  const message = await plugin.postMessage(clean);
+
+  if (message.content !== clean) throw new Error("The server stored different text from what was sent");
+  if (message.sender !== `(plugin) ${info.name}`) throw new Error("The message was not posted by this plugin");
+  return message;
+}
+
+// Example use
+const plugin = new SpringChatPlugin({ key: process.env.CHAT_PLUGIN_KEY });
+sendVerified(plugin, "Deploy to staging complete.", process.env.CHAT_GROUP || null)
+  .then((message) =&gt; console.log("Verified and posted:", message.id))
+  .catch((err) =&gt; {
+    if (err instanceof SpringChatError) {
+      console.error(`Server rejected the request (${err.status}): ${err.message}`);
+    } else {
+      console.error(err.message);
+    }
+    process.exitCode = 1;
+  });</code></pre>
+<pre><code>CHAT_PLUGIN_KEY=sc_your_key_here CHAT_GROUP="Release team" node verify.mjs</code></pre>
+<p>The examples only send messages. The Plugin API does not yet deliver chat messages or commands to a plugin, so a "command" here means a command you run in a terminal.</p>
+
+<div class="note">
+  <strong>Note:</strong> Keys are stored on the server only as a hash. The current app keeps all data in memory, so plugins and keys are lost when the server restarts. Create them again after a restart.
+</div>
+
+  </main>
+</div>
+
+<main id="notFound404" hidden>
+  <div class="nf">
+    <div class="nf-code">404</div>
+    <h1>Page not found</h1>
+    <p>There is no page at <code id="badPath"></code>.</p>
+    <p><a href="/plugin/view/doc-api">Go to the Plugin API documentation</a> or <a href="/">return to the chat</a>.</p>
+  </div>
+</main>
+
+<script>
+(function () {
+  var body = document.body;
+  var known = ['/plugin/view/doc-api', '/doc-api-1.html'];
+  var isDocs = known.indexOf(location.pathname) !== -1;
+
+  // Dark mode: shares the chat's setting (same browser key); otherwise follows the system setting
+  function applyDark(on) {
+    body.classList.toggle('dark', on);
+    localStorage.setItem('darkMode', on ? '1' : '0');
+    document.getElementById('darkToggle').checked = on;
+  }
+
+  // Layout: mobile or PC. Without a saved choice, the screen width decides.
+  function applyLayout(mode) {
+    body.classList.remove('layout-mobile', 'layout-pc');
+    body.classList.add('layout-' + mode);
+    localStorage.setItem('docLayout', mode);
+  }
+
+  // Clipboard: the modern API when the page is secure, otherwise a hidden text box
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return fallbackCopy(text); });
+    }
+    return Promise.resolve(fallbackCopy(text));
+  }
+
+  function fallbackCopy(text) {
+    var area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(area);
+    return ok;
+  }
+
+  var savedDark = localStorage.getItem('darkMode');
+  applyDark(savedDark === null
+    ? window.matchMedia('(prefers-color-scheme: dark)').matches
+    : savedDark === '1');
+
+  var savedLayout = localStorage.getItem('docLayout');
+  applyLayout(savedLayout === 'mobile' || savedLayout === 'pc'
+    ? savedLayout
+    : (window.matchMedia('(max-width: 760px)').matches ? 'mobile' : 'pc'));
+
+  document.getElementById('darkToggle').addEventListener('change', function (e) { applyDark(e.target.checked); });
+  document.getElementById('layoutMobile').addEventListener('click', function () { applyLayout('mobile'); });
+  document.getElementById('layoutPc').addEventListener('click', function () { applyLayout('pc'); });
+
+  if (isDocs) {
+    // Build "On this page" from the section headings
+    var toc = document.getElementById('toc');
+    var title = document.createElement('div');
+    title.className = 'toc-title';
+    title.textContent = 'On this page';
+    var list = document.createElement('ul');
+    document.querySelectorAll('#docs h2').forEach(function (h, i) {
+      h.id = 'section-' + (i + 1);
+      var li = document.createElement('li');
+      var a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      li.appendChild(a);
+      list.appendChild(li);
+    });
+    toc.appendChild(title);
+    toc.appendChild(list);
+
+    // Copy code: one button on every code block
+    document.querySelectorAll('#docs pre').forEach(function (pre) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy code';
+      btn.addEventListener('click', function () {
+        var code = pre.querySelector('code') ? pre.querySelector('code').textContent : pre.textContent;
+        copyText(code).then(function (ok) {
+          btn.textContent = ok ? 'Copied' : 'Copy failed';
+          setTimeout(function () { btn.textContent = 'Copy code'; }, 1800);
+        });
+      });
+      pre.appendChild(btn);
+    });
+  } else {
+    // Unknown address: show the 404 section instead of the documentation
+    document.getElementById('docsPage').hidden = true;
+    document.getElementById('notFound404').hidden = false;
+    document.getElementById('badPath').textContent = location.pathname;
+    document.title = 'Page not found - Spring Chat Plugin API';
+  }
+})();
+</script>
+</body>
+</html>

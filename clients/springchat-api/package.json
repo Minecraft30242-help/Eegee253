@@ -1,0 +1,14 @@
+{
+  "name": "@springchat/api",
+  "version": "1.0.0",
+  "description": "Client for the Spring Chat Plugin API. Works with ES modules and CommonJS.",
+  "main": "./index.cjs",
+  "exports": {
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.cjs"
+    }
+  },
+  "files": ["index.mjs", "index.cjs", "README.md"],
+  "engines": { "node": ">=18" }
+}
